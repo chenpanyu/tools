@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/bouncycastle.iml" filepath="$PROJECT_DIR$/.idea/modules/bouncycastle.iml" group="bouncycastle" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/bouncycastle/bouncycastle_main.iml" filepath="$PROJECT_DIR$/.idea/modules/bouncycastle/bouncycastle_main.iml" group="bouncycastle" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/bouncycastle/bouncycastle_test.iml" filepath="$PROJECT_DIR$/.idea/modules/bouncycastle/bouncycastle_test.iml" group="bouncycastle" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/gitlog.iml" filepath="$PROJECT_DIR$/.idea/modules/gitlog.iml" group="gitlog" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/gitlog/gitlog_main.iml" filepath="$PROJECT_DIR$/.idea/modules/gitlog/gitlog_main.iml" group="gitlog" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/gitlog/gitlog_test.iml" filepath="$PROJECT_DIR$/.idea/modules/gitlog/gitlog_test.iml" group="gitlog" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/makesm2cert.iml" filepath="$PROJECT_DIR$/.idea/modules/makesm2cert.iml" group="makesm2cert" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/makesm2cert/makesm2cert_main.iml" filepath="$PROJECT_DIR$/.idea/modules/makesm2cert/makesm2cert_main.iml" group="makesm2cert" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/makesm2cert/makesm2cert_test.iml" filepath="$PROJECT_DIR$/.idea/modules/makesm2cert/makesm2cert_test.iml" group="makesm2cert" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/replacefilestr.iml" filepath="$PROJECT_DIR$/.idea/modules/replacefilestr.iml" group="replacefilestr" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/replacefilestr/replacefilestr_main.iml" filepath="$PROJECT_DIR$/.idea/modules/replacefilestr/replacefilestr_main.iml" group="replacefilestr" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/replacefilestr/replacefilestr_test.iml" filepath="$PROJECT_DIR$/.idea/modules/replacefilestr/replacefilestr_test.iml" group="replacefilestr" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runtimeinfo.iml" filepath="$PROJECT_DIR$/.idea/modules/runtimeinfo.iml" group="runtimeinfo" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runtimeinfo/runtimeinfo_main.iml" filepath="$PROJECT_DIR$/.idea/modules/runtimeinfo/runtimeinfo_main.iml" group="runtimeinfo" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runtimeinfo/runtimeinfo_test.iml" filepath="$PROJECT_DIR$/.idea/modules/runtimeinfo/runtimeinfo_test.iml" group="runtimeinfo" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tools.iml" filepath="$PROJECT_DIR$/.idea/modules/tools.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tools_main.iml" filepath="$PROJECT_DIR$/.idea/modules/tools_main.iml" group="tools" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tools_test.iml" filepath="$PROJECT_DIR$/.idea/modules/tools_test.iml" group="tools" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/uniformscreensize.iml" filepath="$PROJECT_DIR$/.idea/modules/uniformscreensize.iml" group="uniformscreensize" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/uniformscreensize/uniformscreensize_main.iml" filepath="$PROJECT_DIR$/.idea/modules/uniformscreensize/uniformscreensize_main.iml" group="uniformscreensize" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/uniformscreensize/uniformscreensize_test.iml" filepath="$PROJECT_DIR$/.idea/modules/uniformscreensize/uniformscreensize_test.iml" group="uniformscreensize" />
+    </modules>
+  </component>
+</project>

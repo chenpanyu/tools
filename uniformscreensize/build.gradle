@@ -1,0 +1,38 @@
+import java.text.SimpleDateFormat
+
+SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
+
+group 'cn.com.cpy.tools'
+// 当前时间戳作为版本
+version '1.0-' + format.format(new Date())
+
+apply plugin: 'java'
+//apply plugin: 'application'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    maven {
+        url 'http://maven.aliyun.com/nexus/content/groups/public/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+//    testCompile group: 'junit', name: 'junit', version: '4.12'
+    // https://mvnrepository.com/artifact/org.dom4j/dom4j
+    compile group: 'org.dom4j', name: 'dom4j', version: '2.1.0'
+}
+
+// 打包可运行jar包
+def mainClass = "cn.com.cpy.tools.uniform.screensize.ScreenSizeMain"
+task runnableJar(type: Jar, dependsOn: [compileJava, processResources]) {
+    from files(sourceSets.main.output.classesDir)
+    from files(sourceSets.main.output.resourcesDir)
+    from configurations.runtime.asFileTree.files.collect { zipTree(it) }
+    manifest {
+        attributes 'Main-Class': mainClass
+    }
+}
+

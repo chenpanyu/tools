@@ -1,0 +1,8 @@
+rootProject.name = 'tools'
+include 'gitlog'
+include 'uniformscreensize'
+include 'replacefilestr'
+include 'runtimeinfo'
+include 'makesm2cert'
+include 'bouncycastle'
+

@@ -1,0 +1,41 @@
+import java.text.SimpleDateFormat
+
+SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
+
+group 'cn.com.cpy.tools'
+// 当前时间戳作为版本
+version '1.0-' + format.format(new Date())
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    maven {
+        url 'http://maven.aliyun.com/nexus/content/groups/public/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    //testCompile group: 'junit', name: 'junit', version: '4.12'
+    // https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on
+    //compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.59'
+    // https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk15on
+    //compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.59'
+    compile project(":bouncycastle")
+}
+
+// 打包可运行jar包
+def mainClass = "cn.com.cpy.tools.makesm2cert.MakeSM2CertMain"
+task runnableJar(type: Jar, dependsOn: [compileJava, processResources]) {
+    from files(sourceSets.main.output.classesDir)
+    from files(sourceSets.main.output.resourcesDir)
+    from configurations.runtime.asFileTree.files.collect { zipTree(it) }
+    manifest {
+        attributes 'Main-Class': mainClass
+    }
+}
+
+
