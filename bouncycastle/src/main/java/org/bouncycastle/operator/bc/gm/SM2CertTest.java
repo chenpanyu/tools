@@ -1,4 +1,4 @@
-package cn.com.cpy.tools.makesm2cert;
+package org.bouncycastle.operator.bc.gm;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -19,11 +19,11 @@ import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.bc.gm.SM2SignerBuilder;
 import org.bouncycastle.util.test.TestRandomBigInteger;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyPair;
@@ -32,10 +32,9 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
-public class MakeSM2CertMain {
+public class SM2CertTest {
 
     public static void main(String[] args) throws Exception {
-
         BigInteger SM2_ECC_P = new BigInteger("8542D69E4C044F18E8B92435BF6FF7DE457283915C45517D722EDB8B08F1DFC3", 16);
         BigInteger SM2_ECC_A = new BigInteger("787968B4FA32C3FD2417842E73BBFEFF2F3C848B6831D7E0EC65228B3937E498", 16);
         BigInteger SM2_ECC_B = new BigInteger("63E4C6D3B23B0C849CF84241484BFE48F61D59A5B16BA06E6E12D1DA27C5249A", 16);
@@ -100,20 +99,10 @@ public class MakeSM2CertMain {
         System.out.println("confirm issuer name:" + name.toString().equals(rootCert.getIssuerDN().toString()));
         try {
             rootCert.verify(kp.getPublic(), bouncyCastleProvider);
-        } catch (Exception e) {
+        } catch(Exception e) {
             System.out.println("X509 cert verify failure, reason :" + e);
             return;
         }
         System.out.println("X509 cert info:\n" + rootCert.toString());
-
-        //
-        // output cert
-        //
-        String fileName = "root" + new Date().getTime() / 1000;
-        String path = "d:\\";
-        String rootCertPath = path + fileName + ".cer";
-        FileOutputStream outputStream = new FileOutputStream(rootCertPath);
-        outputStream.write(rootCert.getEncoded());
-        outputStream.close();
     }
 }

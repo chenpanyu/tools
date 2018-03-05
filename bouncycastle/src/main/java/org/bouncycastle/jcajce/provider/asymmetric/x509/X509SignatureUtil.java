@@ -20,6 +20,7 @@ import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.RSASSAPSSparams;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
+import org.bouncycastle.jcajce.spec.SM2ParameterSpec;
 import org.bouncycastle.jcajce.util.MessageDigestUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -50,6 +51,16 @@ class X509SignatureUtil
                 try
                 {
                     signature.setParameter(sigParams.getParameterSpec(PSSParameterSpec.class));
+                }
+                catch (GeneralSecurityException e)
+                {
+                    throw new SignatureException("Exception extracting parameters: " + e.getMessage());
+                }
+            }
+            if (signature.getAlgorithm().equals("SM3WITHSM2")){
+                try
+                {
+                    signature.setParameter(sigParams.getParameterSpec(SM2ParameterSpec.class));
                 }
                 catch (GeneralSecurityException e)
                 {

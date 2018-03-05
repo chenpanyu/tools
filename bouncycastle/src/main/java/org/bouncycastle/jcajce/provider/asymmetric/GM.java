@@ -30,6 +30,7 @@ public class GM
         {
             provider.addAlgorithm("Signature.SM3WITHSM2", PREFIX + "GMSignatureSpi$sm3WithSM2");
             provider.addAlgorithm("Alg.Alias.Signature." + GMObjectIdentifiers.sm2sign_with_sm3, "SM3WITHSM2");
+            provider.addAlgorithm("AlgorithmParameters.SM3WITHSM2", PREFIX + "AlgorithmParametersSpi$sm3WithSM2");
         }
     }
 }

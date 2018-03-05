@@ -1,21 +1,24 @@
 package org.bouncycastle.jcajce.provider.asymmetric.ec;
 
-import java.io.IOException;
-import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.ECGenParameterSpec;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.InvalidParameterSpecException;
-
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.DERNull;
+import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.asn1.pkcs.RSASSAPSSparams;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.asn1.x9.X962Parameters;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jcajce.provider.asymmetric.util.EC5Util;
 import org.bouncycastle.jcajce.provider.asymmetric.util.ECUtil;
+import org.bouncycastle.jcajce.provider.util.DigestFactory;
+import org.bouncycastle.jcajce.spec.SM2ParameterSpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.bouncycastle.math.ec.ECCurve;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.spec.*;
+import java.util.Enumeration;
 
 public class AlgorithmParametersSpi
     extends java.security.AlgorithmParametersSpi
@@ -177,5 +180,45 @@ public class AlgorithmParametersSpi
     protected String engineToString()
     {
         return "EC AlgorithmParameters ";
+    }
+
+    public static class sm3WithSM2 extends AlgorithmParametersSpi {
+        SM2ParameterSpec currentSpec;
+
+        protected void engineInit(AlgorithmParameterSpec paramSpec) throws InvalidParameterSpecException {
+            if (!(paramSpec instanceof SM2ParameterSpec)) {
+                throw new InvalidParameterSpecException(
+                        "SM2ParameterSpec required to initialise an SM3WITHSM2 algorithm parameters object");
+            }
+
+            this.currentSpec = (SM2ParameterSpec) paramSpec;
+        }
+
+        protected void engineInit(byte[] params) throws IOException {
+            DEROctetString der = (DEROctetString) DEROctetString.fromByteArray(params);
+            currentSpec = new SM2ParameterSpec(der.getOctets());
+        }
+
+        protected void engineInit(byte[] params, String format) throws IOException {
+            if (isASN1FormatString(format) || format.equalsIgnoreCase("X.509")) {
+                engineInit(params);
+            } else {
+                throw new IOException("Unknown parameter format " + format);
+            }
+        }
+
+        protected <T extends AlgorithmParameterSpec> T engineGetParameterSpec(Class<T> paramSpec)
+                throws InvalidParameterSpecException
+        {
+            if (SM2ParameterSpec.class.isAssignableFrom(paramSpec) || paramSpec == AlgorithmParameterSpec.class)
+            {
+                return (T)currentSpec;
+            }
+            throw new InvalidParameterSpecException("SM3WITHSM2 AlgorithmParameters cannot convert to " + paramSpec.getName());
+        }
+
+        protected String engineToString() {
+            return "SM3WITHSM2 AlgorithmParameters";
+        }
     }
 }

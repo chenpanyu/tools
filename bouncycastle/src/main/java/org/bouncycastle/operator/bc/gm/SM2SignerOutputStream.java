@@ -1,4 +1,4 @@
-package cn.com.cpy.tools.makesm2cert;
+package org.bouncycastle.operator.bc.gm;
 
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.Signer;
