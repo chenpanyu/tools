@@ -1,5 +1,7 @@
 package cn.com.cpy.tools.gitlog;
 
+import cn.com.cpy.tools.gitlog.util.ProductInfo;
+import cn.com.cpy.tools.gitlog.util.ProductInfoUtil;
 import cn.com.cpy.tools.gitlog.util.UTF8Properties;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -51,13 +53,15 @@ public class GitLogMain {
         return "<" + projectFile.getAbsolutePath() + ">";
     }
 
-    private static void execute(File repositoryDir, File logFile, Date startDate, Date endDate) throws Exception {
+    private static void execute(File repositoryDir, File logFile, File absProductFile, File abcProductFile, Date startDate, Date endDate) throws Exception {
         String gitDir = repositoryDir + "/.git";
         FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
         try (Repository repository = repositoryBuilder.setGitDir(new File(gitDir)).readEnvironment().findGitDir()
                 .setMustExist(true).build();
              Git git = new Git(repository);
              FileOutputStream fos = new FileOutputStream(logFile)) {
+            List<String> projectNameList = new ArrayList<>();
+            StringBuilder str = new StringBuilder();
             Iterable<RevCommit> iterable1 = git.log().call();
             Iterable<RevCommit> iterable2 = git.log().call();
             Iterator<RevCommit> iterator1 = iterable1.iterator();
@@ -79,8 +83,7 @@ public class GitLogMain {
                 AbstractTreeIterator newTreeParser = prepareTreeParser(repository, newCommit);
                 AbstractTreeIterator oldTreeParser = prepareTreeParser(repository, oldCommit);
                 // 拼装每个commit
-                StringBuffer str = new StringBuffer();
-                str.append("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+                str.append("===============================================================================================================\n");
                 str.append(" commit " + newCommit.getName() + "\n");
                 PersonIdent author = newCommit.getAuthorIdent();
                 str.append(" Author: " + author.getName() + " <" + author.getEmailAddress() + "> " + author.getWhen() + "\n");
@@ -95,17 +98,31 @@ public class GitLogMain {
                         if (findedDirCacheMap.containsKey(diff)) continue;
                         File dotProjectFile = new File(diff, DOT_PROJECT);
                         if (dotProjectFile.exists()) {
-                            System.out.println(getProjectName(dotProjectFile));
+                            projectNameList.add(getProjectName(dotProjectFile));
                         }
                         findedDirCacheMap.put(diff, "");
                     }
                     str.append(entry.getChangeType().toString().substring(0, 1) + " " + entry.getNewPath() + "\n");
                 }
                 str.append("\n");
-                // 输出到log文件
-                fos.write(str.toString().getBytes(ENCODING));
-                fos.flush();
             }
+            // 过滤不需要的插件
+            str.append("===============================================================================================================\n");
+            ProductInfo absInfo = ProductInfoUtil.loadProduct(absProductFile);
+            ProductInfo abcInfo = ProductInfoUtil.loadProduct(abcProductFile);
+            for(Iterator<String> it = projectNameList.iterator();it.hasNext();){
+                String projectName = it.next();
+                if(absInfo != null && !absInfo.getPluginsName().contains(projectName)
+                        && abcInfo != null && !abcInfo.getPluginsName().contains(projectName)){
+                    it.remove();
+                    continue;
+                }
+                System.out.println(projectName);
+                str.append("[" + projectName + "]\n");
+            }
+            // 输出到log文件
+            fos.write(str.toString().getBytes(ENCODING));
+            fos.flush();
         }
     }
 
@@ -160,12 +177,16 @@ public class GitLogMain {
         String exportDirPath = props.getProperty("exportDirPath");
         String abRepositoryDirPath = props.getProperty("abRepositoryDirPath");
         String adoreRepositoryDirPath = props.getProperty("adoreRepositoryDirPath");
+        String absProductPath = props.getProperty("absProductPath");
+        String abcProductPath = props.getProperty("abcProductPath");
 
         // 判断目录是否存在
         File exportDir = new File(exportDirPath);
         File version_ = new File(exportDir, "version_" + endTime);
         File abRepositoryDir = new File(abRepositoryDirPath);
         File adoreRepositoryDir = new File(adoreRepositoryDirPath);
+        File absProductFile = new File(absProductPath);
+        File abcProductFile = new File(abcProductPath);
         System.out.println("目录[" + exportDir.getAbsolutePath() + "]是否存在:" + exportDir.exists());
         if (!exportDir.exists()) {
             System.out.println("版本存放目录不存在,程序退出!");
@@ -177,6 +198,8 @@ public class GitLogMain {
             System.out.println("ab或adore仓库目录不存在,程序退出!");
             return;
         }
+        System.out.println("文件[" + absProductFile.getAbsolutePath() + "]是否存在:" + absProductFile.exists() + "," + (absProductFile.exists() ? "过滤服务端插件" : "不过滤服务端插件"));
+        System.out.println("文件[" + abcProductFile.getAbsolutePath() + "]是否存在:" + abcProductFile.exists() + "," + (abcProductFile.exists() ? "过滤客户端插件" : "不过滤客户端插件"));
         // 创建{version}目录
         if (!version_.exists()) version_.mkdirs();
         // 创建{log}/plugins目录
@@ -186,13 +209,13 @@ public class GitLogMain {
         File versionUpdatePluginsDir = new File(version_, "update/plugins");
         if (!versionUpdatePluginsDir.exists()) versionUpdatePluginsDir.mkdirs();
         // 生成xx_git.log文件并导出修改工程名
-        File abGitLogFile = new File(version_, abRepositoryDir.getName() + "_git.log");
-        File adoreGitLogFile = new File(version_, adoreRepositoryDir.getName() + "_git.log");
+        File abGitLogFile = new File(version_, abRepositoryDir.getName() + "_git.changelog");
+        File adoreGitLogFile = new File(version_, adoreRepositoryDir.getName() + "_git.changelog");
         if (!abGitLogFile.exists()) abGitLogFile.createNewFile();
         if (!adoreGitLogFile.exists()) adoreGitLogFile.createNewFile();
         System.out.println("==========================ab==============================");
-        execute(abRepositoryDir, abGitLogFile, format.parse(startTime), endTime.isEmpty() ? null : format.parse(endTime));
+        execute(abRepositoryDir, abGitLogFile, absProductFile, abcProductFile, format.parse(startTime), endTime.isEmpty() ? null : format.parse(endTime));
         System.out.println("==========================adore==============================");
-        execute(adoreRepositoryDir, adoreGitLogFile, format.parse(startTime), endTime.isEmpty() ? null : format.parse(endTime));
+        execute(adoreRepositoryDir, adoreGitLogFile, absProductFile, abcProductFile, format.parse(startTime), endTime.isEmpty() ? null : format.parse(endTime));
     }
 }

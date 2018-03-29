@@ -34,6 +34,7 @@ def mainClass = "cn.com.cpy.tools.gitlog.GitLogMain"
 task runnableJar(type: Jar, dependsOn: [compileJava, processResources]) {
     from files(sourceSets.main.output.classesDir)
     from files(sourceSets.main.output.resourcesDir)
+    from files(sourceSets.main.getAllSource().srcDirTrees)
     from configurations.runtime.asFileTree.files.collect { zipTree(it) }
     manifest {
         attributes 'Main-Class': mainClass

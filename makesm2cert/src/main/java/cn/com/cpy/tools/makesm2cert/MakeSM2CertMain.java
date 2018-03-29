@@ -99,7 +99,7 @@ public class MakeSM2CertMain {
         inputStream.close();
         System.out.println("confirm issuer name:" + name.toString().equals(rootCert.getIssuerDN().toString()));
         try {
-            rootCert.verify(kp.getPublic(), bouncyCastleProvider);
+            rootCert.verify(rootCert.getPublicKey(), bouncyCastleProvider);
         } catch (Exception e) {
             System.out.println("X509 cert verify failure, reason :" + e);
             return;
