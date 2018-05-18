@@ -5,4 +5,5 @@ include 'replacefilestr'
 include 'runtimeinfo'
 include 'makesm2cert'
 include 'bouncycastle'
+include 'adssdk'
 
