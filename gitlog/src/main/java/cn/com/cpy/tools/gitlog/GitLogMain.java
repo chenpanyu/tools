@@ -230,6 +230,7 @@ public class GitLogMain {
 
     /**
      * 扫描插件目录并获取更新记录
+     *
      * @param props
      * @throws Exception
      */
@@ -255,38 +256,25 @@ public class GitLogMain {
             return;
         }
         List<PluginInfo> infos = new ArrayList<>();
+        Date[] oldestDate = new Date[1];
         // 扫描
-        scanPlgins(infos, scanPlginsDir);
+        scanPlgins(infos, oldestDate, scanPlginsDir);
         // 清理update.log
         File logFile = new File(scanPlginsDir, "update.log");
         if (logFile.exists()) {
             logFile.delete();
         }
-        // 初始化本地仓库
-        try (Repository abRepository = new FileRepositoryBuilder().setGitDir(new File(abRepositoryDir + "/.git")).readEnvironment().findGitDir()
-                .setMustExist(true).build();
-             Repository adoreRepository = new FileRepositoryBuilder().setGitDir(new File(adoreRepositoryDir + "/.git")).readEnvironment().findGitDir()
-                     .setMustExist(true).build();) {
-            for (PluginInfo info : infos) {
-                // adore仓库插件
-                if (info.id.startsWith("cn.com.agree.adore")) {
-                    execute(info, adoreRepository, logFile);
-                }
-                execute(info, abRepository, logFile);
-            }
-        }
+        execute(infos, abRepositoryDir, logFile, oldestDate[0]);
+        execute(infos, adoreRepositoryDir, logFile, oldestDate[0]);
         System.out.println("扫描插件目录并获取更新记录结束,请查看文件[" + logFile.getAbsolutePath() + "]");
     }
 
-    /**
-     *
-     * @param plugins
-     * @param repository
-     * @param logFile
-     * @throws Exception
-     */
-    private static void execute(PluginInfo plugins, Repository repository, File logFile) throws Exception {
-        try (Git git = new Git(repository);
+    private static void execute(List<PluginInfo> plugins, File repositoryDir, File logFile, Date oldestDate) throws Exception {
+        String gitDir = repositoryDir + "/.git";
+        FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
+        try (Repository repository = repositoryBuilder.setGitDir(new File(gitDir)).readEnvironment().findGitDir()
+                .setMustExist(true).build();
+             Git git = new Git(repository);
              FileOutputStream fos = new FileOutputStream(logFile, true)) {
             Iterable<RevCommit> iterable1 = git.log().call();
             Iterable<RevCommit> iterable2 = git.log().call();
@@ -300,54 +288,61 @@ public class GitLogMain {
                 RevCommit newCommit = iterator1.next();
                 RevCommit oldCommit = iterator2.next();
                 // commit时间小于startDate
-                if (plugins.date.compareTo(newCommit.getCommitterIdent().getWhen()) > 0) {
+                if (oldestDate.compareTo(newCommit.getCommitterIdent().getWhen()) > 0) {
                     break;
                 }
                 AbstractTreeIterator newTreeParser = prepareTreeParser(repository, newCommit);
                 AbstractTreeIterator oldTreeParser = prepareTreeParser(repository, oldCommit);
                 List<DiffEntry> diffEntries = git.diff().setNewTree(newTreeParser).setOldTree(oldTreeParser).call();
-                boolean isBreak = false;
+                StringBuilder diffStr = new StringBuilder();
+                findedDirCacheMap.clear();
                 for (DiffEntry entry : diffEntries) {
                     // 遍历diff文件所在的父目录,获取diff文件所属工程
-                    for (File diff = new File(repository.getDirectory().getParentFile(), entry.getNewPath()).getParentFile(); !diff.equals(repository.getDirectory().getParentFile()); diff = diff.getParentFile()) {
+                    boolean isBreak1 = false;
+                    for (File diff = new File(repositoryDir, entry.getNewPath()).getParentFile(); !diff.equals(repositoryDir); diff = diff.getParentFile()) {
+                        // 过滤已经查找过的目录,提高效率
+                        if (findedDirCacheMap.containsKey(diff)) continue;
                         File dotProjectFile = new File(diff, DOT_PROJECT);
-                        if (dotProjectFile.exists() && plugins.id.equals(getProjectName(dotProjectFile))) {
-                            // 拼装commit
-                            str.append(" commit " + newCommit.getName() + "\n");
-                            PersonIdent author = newCommit.getAuthorIdent();
-                            str.append(" Author: " + author.getName() + " <" + author.getEmailAddress() + "> " + author.getWhen() + "\n");
-                            PersonIdent committer = newCommit.getCommitterIdent();
-                            str.append(" Commiter: " + committer.getName() + " <" + committer.getEmailAddress() + "> " + committer.getWhen() + "\n");
-                            str.append("\n   " + newCommit.getShortMessage() + "\n\n");
-                            str.append("\n");
-                            isBreak = true;
+                        // 判断projectName以及commit时间
+                        if (dotProjectFile.exists()) {
+                            String projectName = getProjectName(dotProjectFile);
+                            Date newCommitDate = newCommit.getCommitterIdent().getWhen();
+                            // 判断projectName是否相等和newCommitDate是否大于等于插件日期
+                            for(PluginInfo pi : plugins){
+                                if (pi.id.equals(projectName) && pi.date.compareTo(newCommitDate) <= 0) {
+                                    diffStr.append("   " + pi.fileName + "\n");
+                                    isBreak1 = true;
+                                    break;
+                                }
+                            }
+                        }
+                        findedDirCacheMap.put(diff, "");
+                        if (isBreak1) {
                             break;
                         }
                     }
-                    if (isBreak) {
-                        break;
-                    }
+                }
+                if (diffStr.toString().length() > 0) {
+                    str.append("[" + repositoryDir.getName() + "Repository] commit " + newCommit.getName() + " 涉及更新插件为:\n");
+                    //str.append("===============================================================================================================\n");
+                    str.append(diffStr);
+                    str.append("\n===============================================================================================================\n\n\n");
                 }
             }
-            // 有commit记录写入文件
-            if (str.toString().length() > 0){
-                str.append("===============================================================================================================\n\n\n");
-                str.insert(0, "===============================================================================================================\n");
-                str.insert(0, plugins.fileName + ":\n");
-                // 输出到log文件
-                fos.write(str.toString().getBytes(ENCODING));
-                fos.flush();
-            }
+            // 输出到log文件
+            fos.write(str.toString().getBytes(ENCODING));
+            fos.flush();
         }
     }
 
     /**
-     * 扫描插件目录并生成插件信息
+     * 扫描插件目录并生成插件信息和最旧插件时间
      *
-     * @param infos
+     * @param infos         插件信息
+     * @param oldestDate    最旧插件时间
      * @param scanPlginsDir
      */
-    private static void scanPlgins(List<PluginInfo> infos, File scanPlginsDir) {
+    private static void scanPlgins(List<PluginInfo> infos, Date[] oldestDate, File scanPlginsDir) {
         if (infos == null) {
             return;
         }
@@ -370,8 +365,8 @@ public class GitLogMain {
                 try (JarFile jarFile = new JarFile(file);) {
                     ZipEntry mfEntry = jarFile.getEntry("META-INF/MANIFEST.MF");
                     if (mfEntry == null) {
-                        errorLog("无法从文件" + file.getAbsolutePath()
-                                + "中获得MANIFEST.MF条目");
+                        errorLog("无法从文件[" + file.getAbsolutePath()
+                                + "]中获得MANIFEST.MF条目");
                         continue;
                     }
                     try (InputStream manifestInputStream = jarFile.getInputStream(mfEntry);) {
@@ -384,17 +379,21 @@ public class GitLogMain {
                         String version = attrs.getValue("Bundle-Version");
                         info.version = version;
                         info.date = getDateByVersion(version);
+                        // 保留最旧插件日期
+                        if (oldestDate[0] == null || oldestDate[0].after(info.date)) {
+                            oldestDate[0] = info.date;
+                        }
                         infos.add(info);
                     }
                 } catch (ParseException e) {
-                    errorLog("无法从文件" + file.getAbsolutePath()
-                            + "中生成PluginInfo信息");
+                    errorLog("无法从文件[" + file.getAbsolutePath()
+                            + "]中生成PluginInfo信息");
                 } catch (IOException e) {
-                    errorLog("无法从文件" + file.getAbsolutePath()
-                            + "中获得MANIFEST.MF条目");
+                    errorLog("无法从文件[" + file.getAbsolutePath()
+                            + "]中获得MANIFEST.MF条目");
                 }
             } else {
-                scanPlgins(infos, file);
+                scanPlgins(infos, oldestDate, file);
             }
         }
     }
@@ -420,7 +419,7 @@ public class GitLogMain {
         return date;
     }
 
-    private static void errorLog(String msg){
+    private static void errorLog(String msg) {
         System.out.println("ERROR  " + msg);
     }
 
