@@ -1,0 +1,17 @@
+本工具支持两种模式：
+1.基于本地仓库,根据开始时间与结束时间获取更新的插件列表(getDiffPluginList模式)
+2.基于本地仓库,获取配置扫描插件目录中cn.com.agree前缀插件的更新记录(getPluginUpdateLog模式)
+
+getDiffPluginList模式说明：
+1、确定已部署的节点commit时间，可以通过git show history查看。
+2、从远程仓库更新代码，记录当前更新时间。
+3、分别填入gitlog.properties，以后再部署就可以直接把endtime换到starttime，endtime再改为更新代码的时间。
+4、在gitlog.properties中配置ab、adore仓库路径，导出路径，product路径
+5、运行run_diff.cmd，获取差量更新插件列表。
+6、手动到eclipse导出插件，放到导出路径中对应的版本（version_xxxxxxxxx）中。若打版的插件自己也有修改，则在version_xxxxxxxxx建立文件备注。
+7、adore插件比较特殊，记得先编译再导出。
+
+getPluginUpdateLog模式使用说明:
+1、从远程仓库更新最新代码。
+2、在gitlog.properties中配置ab、adore仓库路径、欲扫描插件的目录路径scanPlginsDirPath
+3、运行run_updatelog.cmd，生成更新日志，到scanPlginsDirPath目录下查看update.log文件
