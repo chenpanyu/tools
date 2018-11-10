@@ -1,0 +1,47 @@
+@startuml
+[资源管理器RM] as RM
+frame "事务分支处理模块" {
+    [汇报事务分支状态] as ReportStatus
+    [接收TM\n处理事务消息] as RecvMsgFromTM
+    [事务分支调度\n(三选一)] as TransferDispatch
+    [向TM\n注册事务分支] as RegisterToTM
+    [接收client\n处理事务消息] as RecvMsgFromClient
+}
+frame "数据库" {
+    () " " as 1
+    () " " as 2
+    () " " as 3
+    () " " as 4
+    [SQL解析模块] as sqlpraser
+    [镜像控制模块] as cr
+    [隔离控制模块] as ic
+    [失败重试模块] as db_retry
+}
+frame "服务" {
+    () " " as 11
+    [失败重试模块] as sv_retry
+}
+frame "消息队列" {
+    () " " as 21
+    [失败重试模块] as mq_retry
+}
+RM -- ReportStatus
+RM -- RecvMsgFromTM
+RM -- TransferDispatch
+RM -- RegisterToTM
+RM -- RecvMsgFromClient
+TransferDispatch -down- 1
+1 -right- sqlpraser
+1 -down- 2
+2 -right- cr
+2 -down- 3
+3 -right- ic
+3 -down- 4
+4 -right- db_retry
+
+TransferDispatch -- 11
+11 -right- sv_retry
+
+TransferDispatch -- 21
+21 -right- mq_retry
+@enduml

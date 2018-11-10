@@ -1,0 +1,61 @@
+@startuml
+class ResourceManagerCoordinator {
+    - resourceManagerMap : Map<String, IResourceManager>
+    - tmServerIP ： String
+    - tmServerPort: String
+
+    + {static} getInstance() : ResourceManagerCoordinator
+    - setResourceManager(\n\tString branchId, \n\tIResourceManager rm\n) : void
+    - sendMsgToTMServer(String msg) : void
+    - receiveMsgFromTMServer() : String
+}
+note left : 接收TM报文后，\n调用RM提交或回滚，\n并且失败重试
+
+interface IResourceManager {
+    + tryT()
+    + confirmT() : void
+    + cancleT() : void
+}
+
+abstract class AbstractResourceManager {
+    - xId ： String
+    - branchId ： String
+    + tryT()
+    - register() ： void
+}
+note right : 所有RM执行tryT之前先调用超类，\n注册分支事务并缓存RM到RMC
+
+class DBResourceManager {
+    + tryT()
+    + confirmT() : void
+    + cancleT() : void
+}
+
+class CustomResourceManager {
+    + tryT()
+    + confirmT() : void
+    + cancleT() : void
+}
+note bottom : 定制资源管理器，\n可以是服务RM或者消息队列RM
+
+interface IIsolationController {
+     + lock(\n\tString xId, \n\tlong branchId, \n\tint maxAutoRetries, \n\tList<SQLStatement> stmtList\n) ：boolean
+     + unlock(String xId) : boolean
+}
+
+class IsolationController {
+     + lock(\n\tString xId, \n\tlong branchId, \n\tint maxAutoRetries, \n\tList<SQLStatement> stmtList\n) ：boolean
+     + unlock(String xId) : boolean
+}
+
+ResourceManagerCoordinator <-- DBResourceManager
+ResourceManagerCoordinator <-- CustomResourceManager
+IResourceManager <|-- AbstractResourceManager
+AbstractResourceManager <|-- DBResourceManager
+AbstractResourceManager <|-- CustomResourceManager
+CustomResourceManager -left-> DBResourceManager : 可以嵌套数据库资源管理器
+DBResourceManager *-- sqlparser
+DBResourceManager *-- ImageController
+DBResourceManager *-- IsolationController
+IsolationController --|> IIsolationController
+@enduml

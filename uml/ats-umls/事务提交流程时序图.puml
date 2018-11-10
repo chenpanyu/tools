@@ -1,0 +1,44 @@
+@startuml
+skinparam SequenceMessageAlign center
+'创建参与者
+participant 客户端 as app
+box "资源管理器"
+    participant 分支事务处理模块 as branch
+    'participant SQL解析与生成模块 as sqlparser
+    participant 数据镜像恢复控制模块 as cr
+    participant 事务隔离控制模块 as ic
+end box
+participant 数据库 as db
+participant 事务管理器 as tm
+'设计流程
+app -> tm : 全局事务提交请求
+activate app
+activate tm
+app <<-- tm : 全局事务提交响应
+deactivate app
+group 对每个参与事务的分支
+    branch <- tm : 事务分支提交请求
+    activate branch
+    group 事务分支为insert/update/delete操作才执行\n其中日志包含前置镜像、后置镜像、镜像查询语句
+        branch -> cr : 日志清理请求
+        activate cr
+        cr -> db : 删日志(ATS日志表)
+        activate db
+        cr <<-- db : 删日志操作执行结果
+        deactivate db
+        branch <<-- cr : 日志清理响应
+        deactivate cr
+    end
+    branch -> ic : 锁清理请求
+    activate ic
+    ic -> db : 删锁(ATS事务锁表)
+    activate db
+    ic <<-- db : 删锁操作执行结果
+    deactivate db
+    branch <<-- ic : 锁清理响应
+    deactivate ic
+    branch -->> tm : 事务分支提交响应
+    deactivate branch
+    deactivate tm
+end
+@enduml

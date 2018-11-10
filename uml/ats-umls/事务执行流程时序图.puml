@@ -1,0 +1,87 @@
+@startuml
+skinparam SequenceMessageAlign center
+'创建参与者
+participant 客户端 as app
+box "资源管理器"
+    participant 分支事务处理模块 as branch
+    participant SQL解析与生成模块 as sqlparser
+    participant 数据镜像恢复控制模块 as cr
+    participant 事务隔离控制模块 as ic
+end box
+participant 数据库 as db
+participant 事务管理器 as tm
+'设计流程
+app -> tm : 注册客户端请求
+activate app
+activate tm
+app <<-- tm : 注册客户端响应
+app -> tm : 开启全局事务请求
+app <<-- tm : 开启全局事务响应(包含全局事务ID)
+deactivate tm
+group 对每个参与事务的分支
+    app -> branch : 事务分支执行请求
+    activate branch
+    branch -> tm : 事务分支注册请求
+    activate tm
+    branch <<-- tm : 事务分支注册响应(包含事务分支ID)
+    deactivate tm
+    branch -> sqlparser : sql语句解析请求
+    activate sqlparser
+    branch <<-- sqlparser : sql语句解析响应\n(包含语法树信息)
+    deactivate sqlparser
+
+    group 事务分支为insert/update/delete操作才执行
+        branch -> cr : 镜像查询请求(前置)
+        activate cr
+        cr -> cr : 解析语法树生成镜像查询语句(缓存)
+        cr -> db : 镜像查询语句查询镜像(前置)
+        activate db
+        cr <<-- db : 镜像结果集(前置)
+        deactivate db
+        branch <<-- cr : 镜像查询响应(前置)
+        deactivate cr
+    end
+    branch -> ic : 加锁请求
+    activate ic
+    ic -> db : 锁记录查询(读ATS事务锁表)
+    activate db
+    ic <<-- db : 锁记录查询响应
+    ic -> db : 加锁操作(写ATS事务锁表)
+    ic <<-- db : 加锁操作响应
+    deactivate db
+    branch <<-- ic : 加锁响应
+    deactivate ic
+    branch -> db : 事务分支执行请求
+    activate db
+    branch <<-- db : 事务分支执行响应
+    deactivate db
+
+    group 事务分支为insert/update/delete操作才执行
+        branch -> cr : 镜像查询请求(后置)
+        activate cr
+        cr -> db : 镜像查询语句查询镜像(后置)
+        activate db
+        cr <<-- db : 镜像结果集(后置)
+        deactivate db
+        branch <<-- cr : 镜像查询响应(后置)
+        branch -> cr : 写日志请求(保存前置、后置、镜像查询语句)
+        cr -> db : 写日志(ATS日志表)
+        activate db
+        cr <<-- db : 写日志响应
+        deactivate db
+        branch <<-- cr : 写日志响应
+        deactivate cr
+    end
+    branch -> db : 本地事务提交
+    activate db
+    branch <<-- db : 本地事务提交响应
+    deactivate db
+    branch -> tm : 事务分支状态汇报请求
+    activate tm
+    branch <<-- tm : 事务分支状态汇报响应
+    deactivate tm
+    app <<-- branch : 事务分支执行响应
+    deactivate branch
+    deactivate app
+end
+@enduml
